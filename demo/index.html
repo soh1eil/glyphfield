@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>glyphfield · text as a living particle field</title>
+<meta name="description" content="A 5 KB, zero-dependency library that renders text as a particle field and morphs between words. Shapes Persian and Arabic correctly.">
+<!-- Fonts are progressive enhancement only: without them the page falls back to system fonts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;500;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f0d0c; --blotter:#1a1614; --vellum:#ece5d8; --dim:#9a9082; --line:#2c2623;
+    --brass:#c9a66b; --teal:#4fe0d0; --iris:#7c8cff;
+    --serif:"Newsreader",Georgia,serif; --sans:"Vazirmatn","Segoe UI",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{background:var(--ink);color:var(--vellum);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;overflow-x:hidden}
+  a{color:inherit}
+  .wrap{width:min(1080px,100% - 48px);margin-inline:auto}
+  header{position:fixed;inset:0 0 auto 0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:20px clamp(20px,4vw,48px);font:400 13px var(--mono);letter-spacing:.04em;mix-blend-mode:difference}
+  header a{text-decoration:none;opacity:.85}header a:hover{opacity:1}
+  header nav{display:flex;gap:22px}
+  .hero{height:170vh;position:relative}
+  .stick{position:sticky;top:0;height:100vh;overflow:hidden;background:
+    radial-gradient(60% 50% at 50% 55%,rgba(124,140,255,.07),transparent 70%)}
+  .stick canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .cap{position:absolute;inset:auto 0 clamp(28px,7vh,64px) 0;text-align:center;pointer-events:none}
+  .cap p{font:italic 400 clamp(17px,2.2vw,24px)/1.4 var(--serif);color:var(--vellum);opacity:.92}
+  .cap small{display:block;margin-top:14px;font:400 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+  .tag{position:absolute;inset:78px auto auto 50%;transform:translateX(-50%);font:400 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+  .tag b{font-weight:500;color:var(--brass)}
+  section{padding:clamp(72px,12vh,140px) 0;border-top:1px solid var(--line)}
+  h2{font:400 clamp(30px,4.6vw,52px)/1.1 var(--serif);letter-spacing:-.01em;margin-bottom:18px}
+  h2 em{color:var(--brass)}
+  .lede{max-width:56ch;color:var(--dim);font-size:17px;line-height:1.7}
+  .grid{display:grid;grid-template-columns:1fr;gap:28px;margin-top:44px}
+  .stage{position:relative;height:clamp(240px,38vw,380px);background:var(--blotter);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .stage canvas{width:100%;height:100%;display:block}
+  .bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .chip,.btn{font:400 13px var(--mono);letter-spacing:.02em;color:var(--vellum);background:transparent;border:1px solid var(--line);border-radius:4px;padding:11px 16px;min-height:44px;cursor:pointer;transition:border-color .24s cubic-bezier(.2,.7,.2,1),color .24s}
+  .chip:hover,.btn:hover{border-color:var(--brass)}
+  .chip:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+  .chip[aria-pressed=true]{border-color:var(--brass);color:var(--brass)}
+  input[type=text]{flex:1 1 220px;min-height:44px;background:var(--blotter);color:var(--vellum);border:1px solid var(--line);border-radius:4px;padding:0 14px;font:400 18px var(--sans)}
+  label.r{display:flex;align-items:center;gap:12px;font:400 12px var(--mono);color:var(--dim)}
+  input[type=range]{accent-color:var(--brass);width:160px}
+  .two{display:grid;grid-template-columns:1fr;gap:20px}
+  @media(min-width:820px){.two{grid-template-columns:1fr 1fr}}
+  .card{background:var(--blotter);border:1px solid var(--line);border-radius:10px;padding:22px}
+  .card h3{font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:10px}
+  .card p{color:var(--dim);line-height:1.7;font-size:15px}
+  pre{background:var(--blotter);border:1px solid var(--line);border-radius:10px;padding:22px;overflow-x:auto;font:400 14px/1.7 var(--mono);color:var(--vellum);direction:ltr;text-align:left}
+  pre i{color:var(--dim);font-style:normal}pre b{color:var(--brass);font-weight:400}pre u{text-decoration:none;color:var(--teal)}
+  footer{padding:48px 0 64px;border-top:1px solid var(--line);color:var(--dim);font:400 12px var(--mono);letter-spacing:.04em}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between}
+  #status{color:var(--teal)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><a href="#top">glyphfield</a><nav><a href="#play">playground</a><a href="#use">use</a><a href="https://github.com/soh1eil/glyphfield">github</a></nav></header>
+
+<div class="hero" id="top">
+  <div class="stick">
+    <canvas id="hero" aria-label="glyphfield"></canvas>
+    <div class="tag"><b>4.7&nbsp;KB</b> gzipped · zero dependencies · WebGL with 2D fallback</div>
+    <div class="cap">
+      <p>Text as a living particle field.<br>Move across a word, and the lens translates it.</p>
+      <small>scroll to disperse</small>
+    </div>
+  </div>
+</div>
+
+<section id="play">
+  <div class="wrap">
+    <h2>Persian and Arabic, <em>shaped by the browser</em>.</h2>
+    <p class="lede">Glyphs are drawn by your browser's own canvas text engine, so joining, ligatures and right-to-left order are exactly what the platform does. glyphfield only samples the result. Type anything.</p>
+    <div class="grid">
+      <div class="stage"><canvas id="play-canvas"></canvas></div>
+      <div class="bar">
+        <input type="text" id="word" dir="auto" value="سلام دنیا" maxlength="28" aria-label="Word">
+        <button class="btn" id="go">morph</button>
+        <button class="btn" id="rand">shuffle</button>
+      </div>
+      <div class="bar" id="langs" role="group" aria-label="Examples">
+        <button class="chip" data-w="Hello world">English</button>
+        <button class="chip" data-w="سلام دنیا">فارسی</button>
+        <button class="chip" data-w="مرحبا بالعالم">العربية</button>
+        <button class="chip" data-w="Bonjour">Français</button>
+        <button class="chip" data-w="Soheil سهیل">mixed</button>
+        <label class="r">scatter <input type="range" id="sc" min="0" max="100" value="0" aria-label="Scatter"></label>
+        <span class="r" style="font:400 12px var(--mono);color:var(--dim)">renderer: <span id="status">…</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap two">
+    <div class="card"><h3>Well behaved</h3><p>Pauses when the tab is hidden or the canvas scrolls offscreen, honours <code>prefers-reduced-motion</code> by snapping instead of flying, handles resize and devicePixelRatio, and degrades from WebGL to 2D canvas to an accessible label.</p></div>
+    <div class="card"><h3>Tiny and testable</h3><p>One ES module, no build step, no dependencies. The sampling math, spring physics and word scheduler are pure functions with tests that run under <code>node --test</code>.</p></div>
+  </div>
+</section>
+
+<section id="use">
+  <div class="wrap">
+    <h2>Three lines to <em>alive</em>.</h2>
+    <p class="lede" style="margin-bottom:32px">Drop in one file. Give it a canvas that has a size.</p>
+<pre><b>import</b> glyphfield <b>from</b> <u>'./glyphfield.min.js'</u>;
+
+<b>const</b> f = glyphfield(canvas, {
+  colors: [<u>'#7c8cff'</u>, <u>'#4fe0d0'</u>, <u>'#ffd479'</u>],
+  lens: { alt: { <u>'Hello'</u>: <u>'سلام'</u>, <u>'سلام'</u>: <u>'Hello'</u> } }
+});
+f.cycle([<u>'Hello'</u>, <u>'سلام'</u>, <u>'مرحبا'</u>], 3800);
+f.scatter(<u>0.4</u>);   <i>// 0 assembled … 1 dispersed</i></pre>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>glyphfield · MIT · © Soheil Tahmasbi</span><span>made for scripts that other particle demos forget</span></div></footer>
+
+<script type="module">
+/*glyphfield:start*/const t=(t,e,n)=>{const r=Math.min(1,Math.max(0,(n-t)/(e-t)));return r*r*(3-2*r)},e=/[֐-ࣿיִ-﷿ﹰ-﻿]/,n=/\p{L}/u;function r(t,e,n,r=0){const o=(e[0]+e[2])/2,a=(e[1]+e[3])/2,i=new Float32Array(t.length);for(let e=0;e<t.length;e+=2)i[e]=(t[e]-o)*n,i[e+1]=-(t[e+1]-a)*n+r;return i}function o(t,e,n=Math.random){const r=new Uint32Array(e).map((t,e)=>e),o=new Uint32Array(e);for(let t=e-1;t>0;t--){const e=n()*(t+1)|0,o=r[t];r[t]=r[e],r[e]=o}for(let n=0;n<e;n++)o[r[n]]=t>e?Math.floor(n*t/e):n%t;return o}const a={colors:["#7c8cff","#4fe0d0","#ffd479"],font:"system-ui, sans-serif",rtlFont:'Vazirmatn, "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif',weight:800,fill:[.8,.5],maxDpr:2,blend:"add",interact:!0,spread:.7};globalThis.glyphfield=function(i,l={}){if(!i||"function"!=typeof i.getContext)throw new TypeError("glyphfield: expected a <canvas>");const c={...a,...l},s=c.lens||null,u=matchMedia("(prefers-reduced-motion: reduce)"),h=new Map;let d,f,m,g,p,A,w,v,x,M=u.matches,y=!document.hidden,b=!0,R=!1,S={w:300,h:150},E=1,F=0,P=3,T=null,C="",L=0,_=0,D=0,z=0,I=0,B=0,O=0,V=!1;const U={x:0,y:0,on:!1},$=[],N={kind:"none"};{const t=document.createElement("canvas").getContext("2d",{willReadFrequently:!0});for(const e of c.colors){t.clearRect(0,0,1,1),t.fillStyle="#fff",t.fillStyle=e,t.fillRect(0,0,1,1);const n=t.getImageData(0,0,1,1).data;$.push([n[0]/255,n[1]/255,n[2]/255])}}const k=$.map(t=>`rgb(${t.map(t=>Math.round(255*t))})`),G=(t,e)=>{const n=t*($.length-1),r=Math.min($.length-2,0|n),o=n-r,a=$[r],i=$[r+1]||a;for(let t=0;t<3;t++)e[t]=a[t]+((i[t]||a[t])-a[t])*o};i.setAttribute("role","img");const Y=t=>e.test(t)?`${c.rtlFont}, ${c.font}`:c.font;const q=(t,o)=>{const a=function(t){const r=c.weight+Y(t)+"|"+t;let o=h.get(r);if(o)return o;const a=1400,i=document.createElement("canvas");i.width=a,i.height=420;const l=i.getContext("2d",{willReadFrequently:!0});let s=240;return l.font=`${c.weight} ${s}px ${Y(t)}`,s=Math.min(s,s*a*.94/(l.measureText(t).width||1)),l.font=`${c.weight} ${s}px ${Y(t)}`,l.direction=function(t){for(const r of t)if(n.test(r)||e.test(r))return e.test(r);return!1}(t)?"rtl":"ltr",l.textAlign="center",l.textBaseline="middle",l.fillStyle="#fff",l.fillText(t,700,210),o=function(t,e,n,r=2,o=140){const a=[];let i=e,l=-1,c=n,s=-1;for(let u=0;u<n;u+=r)for(let n=0;n<e;n+=r)t[4*(u*e+n)+3]>o&&(a.push(n,u),n<i&&(i=n),n>l&&(l=n),u<c&&(c=u),u>s&&(s=u));return{pts:Float32Array.from(a),box:l<0?[0,0,1,1]:[i,c,l,s],m:a.length/2}}(l.getImageData(0,0,a,420).data,a,420,2),h.size>16&&h.delete(h.keys().next().value),h.set(r,o),o}(t),i=o||function(t,e,n=[.8,.5]){return Math.min(e.w*n[0]/(t[2]-t[0]+1),e.h*n[1]/(t[3]-t[1]+1))}(a.box,S,c.fill);return{xy:r(a.pts,a.box,i,.02*S.h),m:a.m,s:i,step:2*i}};function H(t,e){if(!F)return;const n=q(t),r=function(t){const e=s&&s.alt;return e&&("function"==typeof e?e(t):e[t])||""}(t),a=r?q(r,n.s):null,i=.35*n.step,l=o(n.m,F),c=a?o(a.m,F):null;A.A=a?A.A||new Float32Array(3*F):null;for(let t=0;t<F;t++){const r=3*t,o=2*l[t];if(A.G[r]=n.xy[o]+(Math.random()-.5)*i,A.G[r+1]=n.xy[o+1]+(Math.random()-.5)*i,A.G[r+2]=1,a){const e=2*c[t];A.A[r]=a.xy[e],A.A[r+1]=a.xy[e+1],A.A[r+2]=1}e||(A.V[r]+=(Math.random()-.5)*S.h*.025,A.V[r+1]+=(Math.random()-.5)*S.h*.025)}P=Math.min(5,Math.max(1.4,n.step*Math.max(1,Math.sqrt(n.m/F))*1.2)),e&&(A.P.set(A.G),A.V.fill(0)),J()}function W(){const t=i.getContext("webgl",{alpha:!0,antialias:!1,premultipliedAlpha:!0,powerPreference:"high-performance"});if(!t)return!1;try{const e=(e,n)=>{const r=t.createShader(e);if(t.shaderSource(r,n),t.compileShader(r),!t.getShaderParameter(r,t.COMPILE_STATUS))throw Error(t.getShaderInfoLog(r));return r};m=t.createProgram(),t.attachShader(m,e(t.VERTEX_SHADER,"attribute vec3 aP;attribute vec3 aC;attribute float aS;uniform vec2 uV;uniform float uD,uSz,uSc;varying vec4 vC;\nvoid main(){float z=clamp(aP.z,0.,1.);gl_Position=vec4(aP.x/uV.x,aP.y/uV.y,0.,1.);gl_PointSize=max(1.,uSz*uD*aS*(.3+.7*z));\nvC=vec4(aC,z*(1.-uSc*.6));}")),t.attachShader(m,e(t.FRAGMENT_SHADER,"precision mediump float;varying vec4 vC;\nvoid main(){float d=length(gl_PointCoord-.5),a=smoothstep(.5,.12,d);a*=(.55+.45*a)*vC.a;gl_FragColor=vec4(vC.rgb*a,a);}")),t.linkProgram(m),t.useProgram(m)}catch(t){return!1}d=t,g={};for(const e of["uV","uD","uSz","uSc"])g[e]=t.getUniformLocation(m,e);return t.enable(t.BLEND),t.blendFunc(t.ONE,"normal"===c.blend?t.ONE_MINUS_SRC_ALPHA:t.ONE),t.disable(t.DEPTH_TEST),!0}function X(){const t=(t,e,n,r)=>{const o=d.createBuffer();d.bindBuffer(d.ARRAY_BUFFER,o),d.bufferData(d.ARRAY_BUFFER,e,r);const a=d.getAttribLocation(m,t);return d.enableVertexAttribArray(a),d.vertexAttribPointer(a,n,d.FLOAT,!1,0,0),o};p=t("aP",A.P,3,d.DYNAMIC_DRAW),t("aC",w,3,d.STATIC_DRAW),t("aS",v,1,d.STATIC_DRAW)}function j(){V=!0;const t=1-.6*B;if(d)d.viewport(0,0,i.width,i.height),d.clearColor(0,0,0,0),d.clear(d.COLOR_BUFFER_BIT),d.uniform2f(g.uV,S.w/2,S.h/2),d.uniform1f(g.uD,E),d.uniform1f(g.uSz,P),d.uniform1f(g.uSc,B),d.bindBuffer(d.ARRAY_BUFFER,p),d.bufferSubData(d.ARRAY_BUFFER,0,A.P),d.drawArrays(d.POINTS,0,F);else if(f){f.setTransform(E,0,0,E,0,0),f.clearRect(0,0,S.w,S.h),f.globalCompositeOperation="normal"===c.blend?"source-over":"lighter",f.globalAlpha=.85*t;for(let t=0;t<k.length;t++){f.fillStyle=k[t];for(let e=0;e<F;e++)if(x[e]===t){const t=Math.min(1,Math.max(0,A.P[3*e+2])),n=P*v[e]*(.3+.7*t);f.fillRect(A.P[3*e]+S.w/2-n/2,S.h/2-A.P[3*e+1]-n/2,n,n)}}}}function J(){_||O||R||(O=requestAnimationFrame(()=>{O=0,j()}))}const K=()=>!R&&y&&b&&!M&&F>0;function Q(e){if(_=0,!K())return;const n=Math.min(.05,(e-(D||e))/1e3);D=e,z+=n,B+=(I-B)*Math.min(1,.1*n*60);const r=Math.min(S.w,S.h);!function(e,n,r){const{P:o,V:a,G:i,A:l,R:c,n:s}=e,u=Math.min(3,60*n),h=Math.pow(.87,u),d=.045*u,{mx:f,my:m,on:g,rad:p,lr:A,t:w,sc:v,spread:x,amp:M}=r,y=A*A,b=.3025*y,R=p*p;for(let e=0;e<s;e++){const n=3*e;let r=i[n]+c[2*e]*v*x+Math.sin(1.3*w+.37*e)*M,s=i[n+1]+c[2*e+1]*v*x+Math.cos(1.1*w+e)*M,A=1-.85*v;if(g&&l){const e=l[n]-f,o=l[n+1]-m,a=t(y,b,e*e+o*o),c=i[n]-f,u=i[n+1]-m,h=t(y,b,c*c+u*u);a>0?(r+=(l[n]-i[n])*a,s+=(l[n+1]-i[n+1])*a):h>0&&(A*=1-h)}if(a[n]+=(r-o[n])*d,a[n+1]+=(s-o[n+1])*d,a[n+2]+=(A-o[n+2])*d,g&&!l){const t=o[n]-f,e=o[n+1]-m,r=t*t+e*e;if(r<R){const o=Math.sqrt(r)+1e-4,i=(1-o/p)*p*.15*u;a[n]+=t/o*i,a[n+1]+=e/o*i}}a[n]*=h,a[n+1]*=h,a[n+2]*=h,o[n]+=a[n]*u,o[n+1]+=a[n+1]*u,o[n+2]+=a[n+2]*u}}(A,n,{mx:U.x,my:U.y,on:U.on&&I<.3,rad:.15*r+20,t:z,sc:B,spread:Math.max(S.w,S.h)*c.spread,lr:s&&s.radius||Math.min(260,Math.max(70,.26*r)),amp:Math.max(.4,.0018*S.h)}),j(),_=requestAnimationFrame(Q)}function Z(){K()?_||(D=0,_=requestAnimationFrame(Q)):(_&&cancelAnimationFrame(_),_=0,R||J()),T&&T.pause(!(y&&b))}let tt=0;function et(){const t=i.clientWidth,e=i.clientHeight;t&&e&&(E=Math.min(window.devicePixelRatio||1,c.maxDpr),i.width=Math.round(t*E),i.height=Math.round(e*E),S={w:t,h:e},F||function(){const t=c.count||(S.w<600?4500:9e3);F="2d"===N.kind?Math.min(t,2500):t,A={n:F,P:new Float32Array(3*F),V:new Float32Array(3*F),G:new Float32Array(3*F),A:null,R:new Float32Array(2*F)},w=new Float32Array(3*F),v=new Float32Array(F),x=new Uint8Array(F);const e=[0,0,0];for(let t=0;t<F;t++){A.P[3*t]=(Math.random()-.5)*S.w,A.P[3*t+1]=(Math.random()-.5)*S.h;const n=Math.random();G(n,e),w.set(e,3*t),x[t]=Math.round(n*($.length-1)),v[t]=.6+.8*Math.random(),A.R[2*t]=2*Math.random()-1,A.R[2*t+1]=2*Math.random()-1}d&&X()}(),clearTimeout(tt),tt=setTimeout(()=>{C&&!R&&H(C,M)},100),J())}const nt=new AbortController,rt={signal:nt.signal,passive:!0},ot=t=>{const e=i.getBoundingClientRect();U.x=t.clientX-e.left-e.width/2,U.y=-(t.clientY-e.top-e.height/2),U.on=t.clientX>=e.left&&t.clientX<=e.right&&t.clientY>=e.top&&t.clientY<=e.bottom},at=()=>{U.on=!1};c.interact&&(addEventListener("pointermove",ot,rt),addEventListener("pointerdown",ot,rt),addEventListener("pointerup",t=>{"touch"===t.pointerType&&at()},rt),document.addEventListener("pointerleave",at,rt),addEventListener("blur",at,rt)),document.addEventListener("visibilitychange",()=>{y=!document.hidden,Z()},rt);const it=()=>{M=u.matches,M&&C&&H(C,!0),M&&st(),Z()};u.addEventListener?u.addEventListener("change",it,rt):u.addListener(it);const lt="function"==typeof ResizeObserver?new ResizeObserver(et):null;lt?lt.observe(i):addEventListener("resize",et,rt);const ct="function"==typeof IntersectionObserver?new IntersectionObserver(t=>{b=t[t.length-1].isIntersecting,Z()}):null;function st(){T&&T.stop(),T=null}ct&&ct.observe(i),i.addEventListener("webglcontextlost",t=>{t.preventDefault(),d=null,Z()},{signal:nt.signal}),i.addEventListener("webglcontextrestored",()=>{W()&&(X(),Z())},{signal:nt.signal}),W()?N.kind="webgl":(f=i.getContext("2d"))&&(N.kind="2d"),et();const ut={morph(t,e={}){t=String(t),C=t;const n=++L;return i.setAttribute("aria-label",t),(t=>{const e=document.fonts;return e&&e.load?e.load(`${c.weight} 100px ${Y(t)}`,t).catch(()=>0):Promise.resolve()})(t).then(()=>{n!==L||R||H(t,!!e.snap||M)})},cycle:(t,e=3800)=>(st(),t&&t.length?M?(ut.morph(t[0]),ut):(T=function(t,e,n,r={setTimeout:(t,e)=>setTimeout(t,e),clearTimeout:t=>clearTimeout(t)}){let o=-1,a=null,i=!1,l=!1;const c=()=>{a=r.setTimeout(u,e)},s=()=>{null!==a&&r.clearTimeout(a),a=null};function u(){a=null,i&&!l&&(o=(o+1)%t.length,n(t[o],o),c())}return{start(){!i&&t.length&&(i=!0,l||u())},stop(){i=!1,s()},pause(t){t!==l&&(l=t,t?s():i&&null===a&&c())},get index(){return o},get running(){return i&&!l}}}(t,e,t=>ut.morph(t)),T.pause(!(y&&b)),T.start(),ut):ut),scatter:t=>void 0===t?I:(I=Math.min(1,Math.max(0,+t||0)),M&&(B=I,J()),ut),get renderer(){return N.kind},get word(){return C},destroy(){if(!R)if(R=!0,st(),nt.abort(),lt&&lt.disconnect(),ct&&ct.disconnect(),cancelAnimationFrame(_),cancelAnimationFrame(O),clearTimeout(tt),d){const t=d.getExtension("WEBGL_lose_context");t&&t.loseContext()}else f&&f.clearRect(0,0,i.width,i.height)}};return ut};
+/*glyphfield:end*/
+
+const $ = s => document.querySelector(s);
+const ALT = {Hello:'سلام', 'سلام':'Hello', 'مرحبا':'Hello', Glyphfield:'گلیف‌فیلد', 'گلیف‌فیلد':'Glyphfield',
+  Soheil:'سهیل', 'سهیل':'Soheil', Bonjour:'سلام', 'Hello world':'سلام دنیا', 'سلام دنیا':'Hello world'};
+
+const hero = glyphfield($('#hero'), {
+  colors: ['#7c8cff', '#4fe0d0', '#ffd479'], weight: 800, font: 'Syne, system-ui, sans-serif',
+  rtlFont: 'Vazirmatn, "Noto Naskh Arabic", Tahoma, sans-serif', lens: {alt: ALT}
+});
+hero.morph('Glyphfield', {snap: true});
+hero.cycle(['Glyphfield', 'سلام', 'Hello', 'مرحبا', 'Soheil', 'سهیل', 'Bonjour'], 4200);
+
+// Scroll disperses the hero. scatter() is cheap and can be driven every frame.
+const box = $('.hero');
+const onScroll = () => {
+  const r = box.getBoundingClientRect(), p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+  hero.scatter(p * 1.15);
+};
+addEventListener('scroll', onScroll, {passive: true}); onScroll();
+
+const play = glyphfield($('#play-canvas'), {
+  colors: ['#c9a66b', '#ece5d8', '#4fe0d0'], weight: 800, lens: {alt: ALT}, count: 7000
+});
+$('#status').textContent = play.renderer;
+const show = w => { $('#word').value = w; play.morph(w.trim() || ' '); };
+play.morph($('#word').value, {snap: true});
+$('#go').onclick = () => show($('#word').value);
+$('#word').addEventListener('keydown', e => { if (e.key === 'Enter') show(e.target.value); });
+$('#langs').addEventListener('click', e => { const w = e.target.dataset && e.target.dataset.w; if (w) show(w); });
+const pool = ['Hello world', 'سلام دنیا', 'مرحبا', 'نوروز', 'Bonjour', 'שלום', 'Salaam', 'ایران', 'العربية', 'Persepolis'];
+$('#rand').onclick = () => show(pool[(Math.random() * pool.length) | 0]);
+$('#sc').addEventListener('input', e => play.scatter(e.target.value / 100));
+</script>
+</body>
+</html>

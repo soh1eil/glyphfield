@@ -1,0 +1,23 @@
+{
+  "name": "glyphfield",
+  "version": "0.1.0",
+  "description": "Text as a living particle field. Morphs between words, shapes Persian and Arabic correctly. ~5 KB gzipped, zero dependencies.",
+  "type": "module",
+  "main": "./src/glyphfield.js",
+  "module": "./src/glyphfield.js",
+  "types": "./src/glyphfield.d.ts",
+  "exports": {
+    ".": {"types": "./src/glyphfield.d.ts", "default": "./src/glyphfield.js"},
+    "./min": "./dist/glyphfield.min.js"
+  },
+  "files": ["src", "dist", "demo", "LICENSE", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.mjs --demo"
+  },
+  "keywords": ["particles", "webgl", "canvas", "text", "morph", "persian", "arabic", "rtl", "animation"],
+  "author": "Soheil Tahmasbi <soheilthm2@gmail.com>",
+  "license": "MIT",
+  "repository": {"type": "git", "url": "git+https://github.com/soh1eil/glyphfield.git"}
+}
