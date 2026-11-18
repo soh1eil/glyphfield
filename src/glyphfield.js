@@ -16,7 +16,7 @@ export const smoothstep = (e0, e1, x) => {
   return t * t * (3 - 2 * t);
 };
 
-const RTL = /[֐-ࣿיִ-﷿ﹰ-﻿]/;
+const RTL = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 const LETTER = /\p{L}/u;
 
 /** True if the text contains any right-to-left letter (picks the font stack). */
