@@ -283,11 +283,11 @@ export function glyphfield(cv, opts = {}) {
       gl.drawArrays(gl.POINTS, 0, n);
     } else if (g2) {
       g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, view.w, view.h);
-      g2.globalCompositeOperation = o.blend === 'normal' ? 'source-over' : 'lighter'; g2.globalAlpha = .85 * fade;
+      g2.globalCompositeOperation = 'source-over'; g2.globalAlpha = .8 * fade; // 'lighter' saturates to white on the CPU path
       for (let c = 0; c < css.length; c++) {
         g2.fillStyle = css[c];
         for (let i = 0; i < n; i++) if (ci[i] === c) {
-          const z = Math.min(1, Math.max(0, S.P[i * 3 + 2])), d = dot * sz[i] * (.3 + .7 * z);
+          const z = Math.min(1, Math.max(0, S.P[i * 3 + 2])), d = dot * sz[i] * .7 * (.3 + .7 * z);
           g2.fillRect(S.P[i * 3] + view.w / 2 - d / 2, view.h / 2 - S.P[i * 3 + 1] - d / 2, d, d);
         }
       }
